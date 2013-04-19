@@ -21,6 +21,7 @@ __author__ = 'tstromberg@google.com (Thomas Stromberg)'
 import re
 import zlib
 from . import util
+from . import hostname
 
 # TODO(tstromberg): Find a way to combine the following two regexps.
 
@@ -36,8 +37,6 @@ PRIVATE_RE = re.compile('^\w+dc\.|^\w+ds\.|^\w+sv\.|^\w+nt\.|\.corp|internal|'
 FQDN_RE = re.compile('^.*\..*\..*\..*\.$|^.*\.[\w-]*\.\w{3,4}\.$|^[\w-]+\.[\w-]{4,}\.\w+\.')
 
 IP_RE = re.compile('^[0-9.]+$')
-
-KNOWN_SECOND_DOMAINS = [x.rstrip() for x in open(util.FindDataFile('data/second_level_domains.txt')).readlines()]
 
 def ExtractIPsFromString(ip_string):
   """Return a tuple of ip addressed held in a string."""
@@ -70,12 +69,9 @@ def GetNetworkForIp(ip, reverse=False):
     return None
 
 def GetDomainFromHostname(hostname):
-  """Get the domain part of a hostname."""
-  for second_level in KNOWN_SECOND_DOMAINS:
-    if hostname.lower().endswith(second_level):
-      custom_part = hostname.replace(second_level, '').split('.')[-1]
-      return '%s%s' % (custom_part, second_level)
-
+  domain = hostname.get_domain_name(hostname)
+  if domain is not None:
+      return domain
   return '.'.join(hostname.split('.')[-2:]).lower()
 
 def GetProviderPartOfHostname(hostname):
